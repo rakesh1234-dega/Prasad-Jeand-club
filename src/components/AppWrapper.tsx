@@ -5,12 +5,14 @@ import SplashScreen from './SplashScreen';
 import Navbar from './Navbar';
 import Footer from './Footer';
 import Toast from './Toast';
+import EmailPopup from './EmailPopup';
+import SocialProofToast from './SocialProofToast';
 import { useAuth } from '@/context/AuthContext';
 import { usePathname } from 'next/navigation';
 
 export default function AppWrapper({ children }: { children: React.ReactNode }) {
   const [showSplash, setShowSplash] = useState(true);
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isLoading } = useAuth();
   const pathname = usePathname();
 
   useEffect(() => {
@@ -26,28 +28,29 @@ export default function AppWrapper({ children }: { children: React.ReactNode }) 
     }
   }, []);
 
-  if (showSplash) {
-    return <SplashScreen />;
-  }
+  if (showSplash) return <SplashScreen />;
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-primary">
-        <div className="animate-spin rounded-full h-12 w-12 border-4 border-secondary border-t-transparent"></div>
+      <div className="min-h-screen flex items-center justify-center bg-[#0D0D0D]">
+        <div className="animate-spin rounded-full h-10 w-10 border-2 border-[#C9A84C] border-t-transparent"></div>
       </div>
     );
   }
 
   const isAuthPage = pathname === '/login' || pathname === '/register';
+  const isAdminPage = pathname?.startsWith('/admin');
 
   return (
-    <div className="min-h-screen flex flex-col">
-      {!isAuthPage && <Navbar />}
-      <main className={`flex-1 ${!isAuthPage ? 'pt-16' : ''}`}>
+    <div className="min-h-screen flex flex-col bg-[#0D0D0D]">
+      {!isAuthPage && !isAdminPage && <Navbar />}
+      <main className={`flex-1 ${!isAuthPage && !isAdminPage ? 'pt-14' : ''}`}>
         {children}
       </main>
-      {!isAuthPage && <Footer />}
+      {!isAuthPage && !isAdminPage && <Footer />}
       <Toast />
+      {!isAuthPage && !isAdminPage && <EmailPopup />}
+      {!isAuthPage && !isAdminPage && <SocialProofToast />}
     </div>
   );
 }
