@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { AuthProvider } from '@/context/AuthContext';
 import { CartProvider } from '@/context/CartContext';
@@ -6,6 +6,13 @@ import { WishlistProvider } from '@/context/WishlistContext';
 import { NotificationProvider } from '@/context/NotificationContext';
 import AppWrapper from '@/components/AppWrapper';
 import ErrorBoundary from '@/components/ErrorBoundary';
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+  themeColor: '#1a1a2e',
+};
 
 export const metadata: Metadata = {
   title: {
@@ -17,6 +24,7 @@ export const metadata: Metadata = {
   authors: [{ name: 'Prasad Jeans Club' }],
   creator: 'Prasad Jeans Club',
   publisher: 'Prasad Jeans Club',
+  metadataBase: new URL('https://prasadjeans.com'),
   openGraph: {
     type: 'website',
     locale: 'en_IN',
@@ -33,12 +41,6 @@ export const metadata: Metadata = {
     index: true,
     follow: true,
   },
-  viewport: {
-    width: 'device-width',
-    initialScale: 1,
-    maximumScale: 5,
-  },
-  themeColor: '#1a1a2e',
 };
 
 export default function RootLayout({

@@ -35,10 +35,14 @@ function isRateLimited(key: string, maxRequests: number, windowMs: number): bool
 function cleanupRateLimitStore() {
   const now = Date.now();
   if (rateLimitStore.size > 10000) {
-    for (const [key, value] of rateLimitStore.entries()) {
+    const keysToDelete: string[] = [];
+    rateLimitStore.forEach((value, key) => {
       if (now > value.resetTime) {
-        rateLimitStore.delete(key);
+        keysToDelete.push(key);
       }
+    });
+    for (const key of keysToDelete) {
+      rateLimitStore.delete(key);
     }
   }
 }
@@ -118,11 +122,12 @@ export function middleware(request: NextRequest) {
   // Content Security Policy
   response.headers.set('Content-Security-Policy', [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-eval' 'unsafe-inline'", // Next.js requires unsafe-eval in dev
+    "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://checkout.razorpay.com",
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "font-src 'self' https://fonts.gstatic.com",
     "img-src 'self' data: https: blob:",
-    "connect-src 'self' https://pmcoqqoyuhmkgxfibsha.supabase.co wss://pmcoqqoyuhmkgxfibsha.supabase.co https://fonts.googleapis.com",
+    "connect-src 'self' https://pmcoqqoyuhmkgxfibsha.supabase.co wss://pmcoqqoyuhmkgxfibsha.supabase.co https://fonts.googleapis.com https://api.razorpay.com https://lumberjack.razorpay.com",
+    "frame-src 'self' https://api.razorpay.com https://checkout.razorpay.com",
     "frame-ancestors 'none'",
     "base-uri 'self'",
     "form-action 'self'",
