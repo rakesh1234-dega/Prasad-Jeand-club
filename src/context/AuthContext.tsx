@@ -2,7 +2,6 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
-import type { User as SupabaseUser, Session } from '@supabase/supabase-js';
 
 interface UserProfile {
   id: string;
@@ -14,7 +13,7 @@ interface UserProfile {
 
 interface AuthContextType {
   user: UserProfile | null;
-  session: Session | null;
+  session: any | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
@@ -28,7 +27,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<UserProfile | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
+  const [session, setSession] = useState<any | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   // Fetch user profile from profiles table

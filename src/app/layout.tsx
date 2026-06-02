@@ -1,4 +1,4 @@
-import type { Metadata, Viewport } from 'next';
+import type { Metadata } from 'next';
 import './globals.css';
 import { AuthProvider } from '@/context/AuthContext';
 import { CartProvider } from '@/context/CartContext';
@@ -17,7 +17,6 @@ export const metadata: Metadata = {
   authors: [{ name: 'Prasad Jeans Club' }],
   creator: 'Prasad Jeans Club',
   publisher: 'Prasad Jeans Club',
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://prasadjeans.com'),
   openGraph: {
     type: 'website',
     locale: 'en_IN',
@@ -33,20 +32,12 @@ export const metadata: Metadata = {
   robots: {
     index: true,
     follow: true,
-    googleBot: {
-      index: true,
-      follow: true,
-      'max-image-preview': 'large',
-      'max-snippet': -1,
-    },
   },
-  manifest: '/manifest.json',
-};
-
-export const viewport: Viewport = {
-  width: 'device-width',
-  initialScale: 1,
-  maximumScale: 5,
+  viewport: {
+    width: 'device-width',
+    initialScale: 1,
+    maximumScale: 5,
+  },
   themeColor: '#1a1a2e',
 };
 

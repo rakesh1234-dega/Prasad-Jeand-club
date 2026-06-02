@@ -31,19 +31,24 @@ function isRateLimited(key: string, maxRequests: number, windowMs: number): bool
   return false;
 }
 
-// Clean up old entries periodically (prevent memory leak)
-setInterval(() => {
+// Clean up old entries on each request (Edge runtime doesn't support setInterval)
+function cleanupRateLimitStore() {
   const now = Date.now();
-  for (const [key, value] of rateLimitStore.entries()) {
-    if (now > value.resetTime) {
-      rateLimitStore.delete(key);
+  if (rateLimitStore.size > 10000) {
+    for (const [key, value] of rateLimitStore.entries()) {
+      if (now > value.resetTime) {
+        rateLimitStore.delete(key);
+      }
     }
   }
-}, 60000); // Clean every 60 seconds
+}
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const clientIP = getRateLimitKey(request);
+  
+  // Cleanup stale rate limit entries
+  cleanupRateLimitStore();
 
   // ============================================
   // 1. RATE LIMITING

@@ -24,16 +24,7 @@ export async function GET(request: NextRequest) {
     const supabase = createServerClient();
     const { data: cartItems, error } = await supabase
       .from('cart_items')
-      .select(`
-        id,
-        quantity,
-        size,
-        color,
-        product_id,
-        products (
-          id, name, price, old_price, discount, category, sizes, colors, images, rating, reviews_count, stock, brand
-        )
-      `)
+      .select('*')
       .eq('user_id', user.id);
 
     if (error) {
@@ -74,18 +65,22 @@ export async function POST(request: NextRequest) {
     const supabase = createServerClient();
 
     // Check product exists and is in stock
-    const { data: product } = await supabase
+    const { data: product, error: productError } = await supabase
       .from('products')
-      .select('id, stock, is_active')
+      .select('*')
       .eq('id', productId)
       .single();
 
-    if (!product || !product.is_active) {
+    if (productError || !product) {
+      return NextResponse.json({ error: 'Product not found' }, { status: 400 });
+    }
+
+    if (!(product as any).is_active) {
       return NextResponse.json({ error: 'Product not available' }, { status: 400 });
     }
 
-    if (product.stock < quantity) {
-      return NextResponse.json({ error: `Only ${product.stock} units available` }, { status: 400 });
+    if ((product as any).stock < quantity) {
+      return NextResponse.json({ error: `Only ${(product as any).stock} units available` }, { status: 400 });
     }
 
     // Check existing cart count (max 20 items)

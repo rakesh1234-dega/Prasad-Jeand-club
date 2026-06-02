@@ -66,28 +66,35 @@ export async function POST(request: NextRequest) {
     let subtotal = 0;
     for (const item of body.items) {
       // Verify price from database
-      const { data: product } = await supabase
+      const { data: product, error: productError } = await supabase
         .from('products')
-        .select('price, stock, is_active')
+        .select('*')
         .eq('id', item.product.id)
         .single();
 
-      if (!product || !product.is_active) {
+      if (productError || !product) {
+        return NextResponse.json(
+          { error: `Product "${item.product.name}" not found.` },
+          { status: 400 }
+        );
+      }
+
+      if (!(product as any).is_active) {
         return NextResponse.json(
           { error: `Product "${item.product.name}" is no longer available.` },
           { status: 400 }
         );
       }
 
-      if (product.stock < item.quantity) {
+      if ((product as any).stock < item.quantity) {
         return NextResponse.json(
-          { error: `Only ${product.stock} units of "${item.product.name}" available.` },
+          { error: `Only ${(product as any).stock} units of "${item.product.name}" available.` },
           { status: 400 }
         );
       }
 
       // Use server-verified price, not client-sent price
-      subtotal += product.price * item.quantity;
+      subtotal += (product as any).price * item.quantity;
     }
 
     // Apply coupon if provided
@@ -96,14 +103,15 @@ export async function POST(request: NextRequest) {
       const { data: couponResult } = await supabase
         .rpc('validate_coupon', { p_code: body.couponCode, p_order_total: subtotal });
 
-      if (couponResult && couponResult[0]?.is_valid) {
-        const discount = (subtotal * couponResult[0].discount_percent) / 100;
-        discountAmount = Math.min(discount, couponResult[0].max_discount);
+      if (couponResult && (couponResult as any)[0]?.is_valid) {
+        const result = (couponResult as any)[0];
+        const discount = (subtotal * result.discount_percent) / 100;
+        discountAmount = Math.min(discount, result.max_discount);
         
         // Increment coupon usage
         await supabase
           .from('coupons')
-          .update({ used_count: couponResult[0].used_count + 1 })
+          .update({ used_count: result.used_count + 1 } as any)
           .eq('code', body.couponCode);
       }
     }
@@ -117,18 +125,18 @@ export async function POST(request: NextRequest) {
       .from('orders')
       .insert({
         user_id: user.id,
-        items: body.items,
+        items: body.items as any,
         subtotal,
         discount_amount: discountAmount,
         delivery_charge: deliveryCharge,
         total,
         status: 'placed',
-        shipping_address: body.shippingAddress,
+        shipping_address: body.shippingAddress as any,
         payment_method: body.paymentMethod,
         payment_status: body.paymentMethod === 'cod' ? 'pending' : 'paid',
         coupon_code: body.couponCode,
-      })
-      .select('id, order_number, total, status, created_at')
+      } as any)
+      .select('*')
       .single();
 
     if (orderError) {
@@ -139,8 +147,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const orderData = order as any;
+
     // Decrement stock for each product
-    await supabase.rpc('decrement_stock', { p_items: body.items });
+    await supabase.rpc('decrement_stock', { p_items: body.items } as any);
 
     // Clear user's cart after successful order
     await supabase
@@ -154,19 +164,18 @@ export async function POST(request: NextRequest) {
       .insert({
         user_id: user.id,
         title: 'Order Placed Successfully!',
-        message: `Your order #${order.order_number} has been placed. Total: ₹${total.toLocaleString()}. Expected delivery in ${body.deliveryType === 'express' ? '2-3' : '5-7'} business days.`,
+        message: `Your order #${orderData.order_number} has been placed. Total: ₹${total.toLocaleString()}. Expected delivery in ${body.deliveryType === 'express' ? '2-3' : '5-7'} business days.`,
         type: 'order',
-        metadata: { order_id: order.id, order_number: order.order_number },
-      });
+      } as any);
 
     return NextResponse.json({
       success: true,
       order: {
-        id: order.id,
-        orderNumber: order.order_number,
-        total: order.total,
-        status: order.status,
-        createdAt: order.created_at,
+        id: orderData.id,
+        orderNumber: orderData.order_number,
+        total: orderData.total,
+        status: orderData.status,
+        createdAt: orderData.created_at,
       },
     }, { status: 201 });
 
@@ -208,7 +217,7 @@ export async function GET(request: NextRequest) {
       .range((page - 1) * limit, page * limit - 1);
 
     if (status && status !== 'all') {
-      query = query.eq('status', status);
+      query = query.eq('status', status as any);
     }
 
     const { data: orders, error, count } = await query;

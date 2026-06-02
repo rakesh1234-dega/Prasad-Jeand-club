@@ -43,8 +43,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (data && data[0]) {
-      const result = data[0];
+    if (data && (data as any)[0]) {
+      const result = (data as any)[0];
       if (result.is_valid) {
         const discount = (orderTotal * result.discount_percent) / 100;
         const cappedDiscount = Math.min(discount, result.max_discount);
