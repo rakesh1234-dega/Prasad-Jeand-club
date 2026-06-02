@@ -26,8 +26,8 @@ const config: Config = {
         },
       },
       fontFamily: {
-        poppins: ['Poppins', 'sans-serif'],
-        inter: ['Inter', 'sans-serif'],
+        poppins: ['Plus Jakarta Sans', 'sans-serif'],
+        inter: ['DM Sans', 'sans-serif'],
       },
       animation: {
         'fade-in': 'fadeIn 0.5s ease-out',
