@@ -5,115 +5,93 @@ import Link from 'next/link';
 
 export default function Footer() {
   return (
-    <footer className="bg-primary text-white">
-      {/* Main Footer */}
+    <footer className="bg-gray-900 text-white">
+      {/* Main */}
       <div className="max-w-7xl mx-auto px-4 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
           {/* Brand */}
-          <div>
+          <div className="col-span-2 md:col-span-1">
             <div className="flex items-center gap-2 mb-4">
-              <div className="w-10 h-10 bg-gradient-to-br from-secondary to-accent rounded-lg flex items-center justify-center">
+              <div className="w-10 h-10 bg-red-600 rounded-lg flex items-center justify-center">
                 <span className="text-white text-sm font-bold">PJC</span>
               </div>
               <div>
-                <h3 className="font-poppins font-bold text-lg">PRASAD JEANS</h3>
-                <p className="text-[10px] text-gray-400 tracking-wider">CLUB</p>
+                <h3 className="font-poppins font-bold text-base">PRASAD JEANS</h3>
+                <p className="text-[9px] text-gray-400 tracking-widest uppercase">Club • Est 2020</p>
               </div>
             </div>
-            <p className="text-sm text-gray-400 leading-relaxed">
-              Your destination for premium men&apos;s fashion. Quality clothing at affordable prices since 2020.
+            <p className="text-xs text-gray-400 leading-relaxed">
+              Premium men&apos;s fashion at prices you&apos;ll love. Quality clothing delivered across India.
             </p>
-            <div className="flex gap-3 mt-4">
-              {['facebook', 'instagram', 'twitter', 'youtube'].map(social => (
-                <a key={social} href="#" className="w-9 h-9 bg-white/10 rounded-lg flex items-center justify-center hover:bg-secondary transition-colors">
-                  <span className="text-xs capitalize">{social[0].toUpperCase()}</span>
+            <div className="flex gap-2 mt-4">
+              {['FB', 'IG', 'TW', 'YT'].map(s => (
+                <a key={s} href="#" className="w-8 h-8 bg-white/10 rounded-lg flex items-center justify-center text-[10px] font-bold text-gray-300 hover:bg-red-600 hover:text-white transition-colors">
+                  {s}
                 </a>
               ))}
             </div>
           </div>
 
-          {/* Quick Links */}
+          {/* Shop */}
           <div>
-            <h4 className="font-poppins font-semibold mb-4">Quick Links</h4>
+            <h4 className="font-semibold text-sm mb-3">Shop</h4>
             <ul className="space-y-2">
               {[
-                { href: '/shop', label: 'Shop All' },
                 { href: '/shop/jeans', label: 'Jeans' },
                 { href: '/shop/shirts', label: 'Shirts' },
                 { href: '/shop/tshirts', label: 'T-Shirts' },
                 { href: '/shop/hoodies', label: 'Hoodies' },
                 { href: '/shop/jackets', label: 'Jackets' },
+                { href: '/shop/shorts', label: 'Shorts' },
               ].map(link => (
                 <li key={link.href}>
-                  <Link href={link.href} className="text-sm text-gray-400 hover:text-secondary transition-colors">
-                    {link.label}
-                  </Link>
+                  <Link href={link.href} className="text-xs text-gray-400 hover:text-white transition-colors">{link.label}</Link>
                 </li>
               ))}
             </ul>
           </div>
 
-          {/* Help */}
+          {/* Support */}
           <div>
-            <h4 className="font-poppins font-semibold mb-4">Help</h4>
+            <h4 className="font-semibold text-sm mb-3">Support</h4>
             <ul className="space-y-2">
               {[
                 { href: '/faq', label: 'FAQ' },
-                { href: '/returns', label: 'Return Policy' },
-                { href: '/privacy', label: 'Privacy Policy' },
-                { href: '/terms', label: 'Terms & Conditions' },
+                { href: '/returns', label: 'Returns' },
                 { href: '/contact', label: 'Contact Us' },
-                { href: '/about', label: 'About Us' },
+                { href: '/orders', label: 'Track Order' },
+                { href: '/privacy', label: 'Privacy' },
+                { href: '/terms', label: 'Terms' },
               ].map(link => (
                 <li key={link.href}>
-                  <Link href={link.href} className="text-sm text-gray-400 hover:text-secondary transition-colors">
-                    {link.label}
-                  </Link>
+                  <Link href={link.href} className="text-xs text-gray-400 hover:text-white transition-colors">{link.label}</Link>
                 </li>
               ))}
             </ul>
           </div>
 
-          {/* Contact Info */}
+          {/* Contact */}
           <div>
-            <h4 className="font-poppins font-semibold mb-4">Contact Us</h4>
-            <ul className="space-y-3">
-              <li className="flex items-start gap-2">
-                <span className="text-secondary">📍</span>
-                <span className="text-sm text-gray-400">123, Fashion Street, Textile Market, Mumbai - 400001</span>
-              </li>
-              <li className="flex items-center gap-2">
-                <span className="text-secondary">📱</span>
-                <span className="text-sm text-gray-400">+91 98765 43210</span>
-              </li>
-              <li className="flex items-center gap-2">
-                <span className="text-secondary">📧</span>
-                <span className="text-sm text-gray-400">support@prasadjeans.com</span>
-              </li>
-              <li className="flex items-center gap-2">
-                <span className="text-secondary">⏰</span>
-                <span className="text-sm text-gray-400">Mon-Sat: 10AM - 8PM</span>
-              </li>
+            <h4 className="font-semibold text-sm mb-3">Contact</h4>
+            <ul className="space-y-2 text-xs text-gray-400">
+              <li>📱 +91 98765 43210</li>
+              <li>📧 support@prasadjeans.com</li>
+              <li>📍 Mumbai, India</li>
+              <li>⏰ Mon-Sat: 10AM-8PM</li>
             </ul>
           </div>
         </div>
       </div>
 
-      {/* Bottom Bar */}
-      <div className="border-t border-white/10">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex flex-col md:flex-row items-center justify-between gap-3">
-          <p className="text-xs text-gray-400">
-            © 2024 Prasad Jeans Club. All rights reserved.
-          </p>
-          <div className="flex items-center gap-4">
-            <span className="text-xs text-gray-400">Secure Payments:</span>
-            <div className="flex gap-2">
-              {['VISA', 'MC', 'UPI', 'COD'].map(method => (
-                <span key={method} className="text-[10px] bg-white/10 px-2 py-1 rounded text-gray-300">
-                  {method}
-                </span>
-              ))}
-            </div>
+      {/* Bottom */}
+      <div className="border-t border-gray-800">
+        <div className="max-w-7xl mx-auto px-4 py-4 flex flex-col md:flex-row items-center justify-between gap-2">
+          <p className="text-[10px] text-gray-500">© 2024 Prasad Jeans Club. All rights reserved.</p>
+          <div className="flex items-center gap-3 text-[10px] text-gray-500">
+            <span>Payments:</span>
+            {['VISA', 'MC', 'UPI', 'GPay', 'COD'].map(m => (
+              <span key={m} className="bg-white/10 px-2 py-0.5 rounded">{m}</span>
+            ))}
           </div>
         </div>
       </div>
