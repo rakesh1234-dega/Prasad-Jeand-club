@@ -93,20 +93,12 @@ export default function Navbar() {
                 
                 {/* Animated Horizontal Dropdown */}
                 {showCategories && (
-                  <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 bg-white rounded-xl shadow-2xl border border-gray-100 p-6 animate-slide-down">
-                    <div className="flex gap-4">
-                      {categories.map((cat, index) => (
-                        <Link
-                          key={cat.id}
-                          href={`/shop/${cat.id}`}
-                          className="flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-gray-50 transition-all hover:scale-105 min-w-[100px] opacity-0 animate-stagger"
-                          style={{ animationDelay: `${index * 80}ms`, animationFillMode: 'forwards' }}
-                        >
-                          <div className="w-16 h-16 bg-gradient-to-br from-gray-100 to-gray-200 rounded-xl flex items-center justify-center text-2xl shadow-sm">
-                            {cat.icon}
-                          </div>
-                          <span className="text-xs font-medium text-gray-700">{cat.name}</span>
-                          <span className="text-[10px] text-secondary font-medium">Shop Now →</span>
+                  <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 bg-[#1A1A1A] rounded-xl shadow-2xl border border-[#2A2A2A] p-5 animate-fadeIn z-50">
+                    <div className="flex gap-3">
+                      {categories.map((cat) => (
+                        <Link key={cat.id} href={`/shop/${cat.id}`} onClick={() => setShowCategories(false)} className="flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-[#222] transition-all min-w-[85px]">
+                          <div className="w-12 h-12 bg-[#222] border border-[#333] rounded-xl flex items-center justify-center text-xl">{cat.icon}</div>
+                          <span className="text-[11px] font-medium text-[#eee]">{cat.name}</span>
                         </Link>
                       ))}
                     </div>
