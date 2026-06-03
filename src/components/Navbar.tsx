@@ -83,10 +83,8 @@ export default function Navbar() {
               <div 
                 ref={categoryRef}
                 className="relative"
-                onMouseEnter={() => setShowCategories(true)}
-                onMouseLeave={() => setShowCategories(false)}
               >
-                <button className="text-sm font-medium text-gray-700 hover:text-secondary transition-colors flex items-center gap-1">
+                <button onClick={() => setShowCategories(!showCategories)} className="text-sm font-medium text-gray-700 hover:text-secondary transition-colors flex items-center gap-1">
                   Categories
                   <svg className={`w-4 h-4 transition-transform ${showCategories ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
