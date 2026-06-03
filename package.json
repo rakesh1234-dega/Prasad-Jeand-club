@@ -1,6 +1,6 @@
 {
   "name": "prasad-jeans-club",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -12,9 +12,7 @@
     "next": "14.2.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "@supabase/supabase-js": "^2.39.0",
-    "framer-motion": "^10.18.0",
-    "lucide-react": "^0.294.0"
+    "zustand": "^4.4.7"
   },
   "devDependencies": {
     "@types/node": "^20.10.0",

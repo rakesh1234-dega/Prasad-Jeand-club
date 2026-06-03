@@ -1,77 +1,46 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useCart } from '@/context/CartContext';
-import { useNotifications } from '@/context/NotificationContext';
 
 export default function OrderSuccessPage() {
-  const { clearCart, items, getTotal } = useCart();
-  const { addNotification } = useNotifications();
-  const orderId = `PJC-${Date.now().toString().slice(-8)}`;
+  const [orderId, setOrderId] = useState('');
 
   useEffect(() => {
-    // Save order
-    const orders = JSON.parse(localStorage.getItem('pjc_orders') || '[]');
-    orders.unshift({
-      id: orderId,
-      items: items,
-      total: getTotal(),
-      status: 'placed',
-      createdAt: new Date().toISOString(),
-      deliveryDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-    });
-    localStorage.setItem('pjc_orders', JSON.stringify(orders));
-
-    // Add notification
-    addNotification({
-      title: 'Order Placed Successfully!',
-      message: `Your order #${orderId} has been placed. Expected delivery in 5-7 days.`,
-      type: 'order',
-    });
-
-    // Clear cart
-    clearCart();
+    const id = localStorage.getItem('pjc_last_order_id') || `PJC${Math.floor(100000 + Math.random() * 900000)}`;
+    setOrderId(id);
+    localStorage.removeItem('pjc_last_order_id');
+    localStorage.removeItem('pjc_cart_abandoned');
   }, []);
 
+  const deliveryDate = new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
+
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-      <div className="max-w-md w-full mx-4">
-        <div className="bg-white rounded-2xl p-8 shadow-card text-center">
-          {/* Success Animation */}
-          <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto animate-bounce-in">
-            <svg className="w-12 h-12 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-            </svg>
-          </div>
+    <div className="min-h-screen flex items-center justify-center px-4">
+      <div className="card rounded-xl p-8 max-w-sm w-full text-center animate-fadeIn">
+        {/* Animated Checkmark */}
+        <div className="w-20 h-20 mx-auto bg-[#2ECC71]/10 rounded-full flex items-center justify-center mb-5">
+          <svg className="w-10 h-10 text-[#2ECC71]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path className="animate-drawCheck" strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+          </svg>
+        </div>
 
-          <h1 className="text-2xl font-poppins font-bold text-primary mt-6">Order Placed!</h1>
-          <p className="text-gray-500 mt-2">Your order has been placed successfully</p>
+        <h1 className="font-display text-2xl font-bold text-[#C9A84C]">Order Placed! 🎉</h1>
+        <p className="text-[#A0A0A0] text-sm mt-2">Your order has been placed successfully</p>
 
-          <div className="bg-gray-50 rounded-xl p-4 mt-6">
-            <p className="text-sm text-gray-500">Order ID</p>
-            <p className="text-lg font-bold text-primary font-mono">#{orderId}</p>
-          </div>
+        <div className="card rounded-md p-3 mt-5">
+          <p className="text-[10px] text-[#666] uppercase tracking-wider">Order ID</p>
+          <p className="text-lg font-bold text-white font-body tracking-wider">#{orderId}</p>
+        </div>
 
-          <div className="space-y-2 mt-4 text-sm">
-            <div className="flex justify-between">
-              <span className="text-gray-500">Expected Delivery</span>
-              <span className="font-medium">5-7 business days</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-500">Payment</span>
-              <span className="font-medium text-green-600">Confirmed</span>
-            </div>
-          </div>
+        <div className="text-xs text-[#A0A0A0] mt-4 space-y-1">
+          <p>Expected delivery: <strong className="text-white">{deliveryDate}</strong></p>
+          <p>Payment: <strong className="text-[#2ECC71]">Confirmed ✓</strong></p>
+        </div>
 
-          <div className="flex flex-col gap-3 mt-8">
-            <Link href="/orders" className="w-full py-3 bg-primary text-white font-medium rounded-xl hover:bg-primary-light transition-colors">
-              Track Order
-            </Link>
-            <Link href="/shop" className="w-full py-3 border border-gray-200 text-gray-700 font-medium rounded-xl hover:bg-gray-50 transition-colors">
-              Continue Shopping
-            </Link>
-          </div>
+        <div className="flex flex-col gap-2 mt-6">
+          <Link href="/orders" className="btn-gold-outline w-full text-center block py-3">TRACK ORDER</Link>
+          <Link href="/shop" className="btn-gold w-full text-center block py-3">CONTINUE SHOPPING</Link>
         </div>
       </div>
     </div>

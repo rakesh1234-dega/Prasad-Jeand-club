@@ -1,179 +1,136 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { useCart } from '@/context/CartContext';
-
-type PaymentMethod = 'upi' | 'card' | 'netbanking' | 'cod';
+import { useRouter } from 'next/navigation';
+import { useStore } from '@/store/useStore';
 
 export default function PaymentPage() {
-  const { items, getTotal, getSubtotal, couponDiscount, clearCart } = useCart();
+  const cart = useStore((s) => s.cart);
+  const addOrder = useStore((s) => s.addOrder);
+  const clearCart = useStore((s) => s.clearCart);
   const router = useRouter();
-  const [selectedMethod, setSelectedMethod] = useState<PaymentMethod>('upi');
-  const [isProcessing, setIsProcessing] = useState(false);
+  const [method, setMethod] = useState('upi');
+  const [processing, setProcessing] = useState(false);
   const [upiId, setUpiId] = useState('');
 
-  const deliveryCharge = getSubtotal() >= 999 ? 0 : 99;
-  const codCharge = selectedMethod === 'cod' ? 40 : 0;
-  const totalAmount = getTotal() + deliveryCharge + codCharge;
+  const subtotal = cart.reduce((s, i) => s + i.price * i.qty, 0);
+  const deliveryType = typeof window !== 'undefined' ? localStorage.getItem('pjc_checkout_delivery') || 'standard' : 'standard';
+  const delivery = deliveryType === 'express' ? 99 : (subtotal >= 999 ? 0 : 99);
+  const codCharge = method === 'cod' ? 40 : 0;
+  const total = subtotal + delivery + codCharge;
 
-  const handlePayment = (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsProcessing(true);
-
-    // Simulate payment processing
+  const handlePay = () => {
+    setProcessing(true);
     setTimeout(() => {
-      // Save order
-      const orders = JSON.parse(localStorage.getItem('pjc_orders') || '[]');
-      const orderId = `PJC-${Date.now().toString().slice(-8)}`;
-      orders.unshift({
-        id: orderId,
-        items: items,
-        total: totalAmount,
+      const address = JSON.parse(localStorage.getItem('pjc_checkout_address') || '{}');
+      const order = {
+        id: `PJC${Math.floor(100000 + Math.random() * 900000)}`,
+        items: cart,
+        total,
         status: 'placed',
-        paymentMethod: selectedMethod,
+        address,
+        payment: method,
         createdAt: new Date().toISOString(),
-        deliveryDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-      });
-      localStorage.setItem('pjc_orders', JSON.stringify(orders));
+      };
+      addOrder(order);
       clearCart();
+      localStorage.removeItem('pjc_checkout_address');
+      localStorage.removeItem('pjc_checkout_delivery');
+      localStorage.setItem('pjc_last_order_id', order.id);
       router.push('/order-success');
-    }, 2000);
+    }, 1500);
   };
 
-  if (items.length === 0) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
-        <div className="text-center">
-          <span className="text-6xl block mb-4">🛒</span>
-          <h2 className="text-xl font-poppins font-bold text-gray-800 mb-2">No items to pay for</h2>
-          <p className="text-gray-500 text-sm mb-6">Your cart is empty</p>
-          <Link href="/shop" className="px-6 py-3 bg-red-600 text-white font-medium rounded-lg text-sm">Continue Shopping</Link>
-        </div>
-      </div>
-    );
+  if (cart.length === 0) {
+    return <div className="min-h-screen flex items-center justify-center"><div className="text-center"><p className="text-[#A0A0A0]">No items</p><Link href="/shop" className="btn-gold-sm mt-3 inline-block">Shop</Link></div></div>;
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 page-enter">
+    <div className="min-h-screen">
       <div className="max-w-4xl mx-auto px-4 py-8">
-        <Link href="/checkout" className="text-sm text-gray-500 hover:text-red-600 flex items-center gap-1 mb-6">
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
-          Back to Checkout
-        </Link>
-        
-        <h1 className="text-2xl font-poppins font-bold text-gray-900 mb-1">Payment</h1>
-        <p className="text-sm text-gray-500 mb-8">Choose your payment method</p>
-
-        <form onSubmit={handlePayment}>
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Payment Methods */}
-            <div className="lg:col-span-2 space-y-4">
-              {/* UPI */}
-              <label className={`flex items-center gap-4 p-4 bg-white rounded-xl border-2 cursor-pointer transition-all ${selectedMethod === 'upi' ? 'border-red-500 bg-red-50/30' : 'border-gray-200 hover:border-gray-300'}`}>
-                <input type="radio" name="payment" value="upi" checked={selectedMethod === 'upi'} onChange={() => setSelectedMethod('upi')} className="w-4 h-4 text-red-600" />
-                <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center"><span className="text-xl">📱</span></div>
-                <div className="flex-1">
-                  <p className="font-semibold text-sm text-gray-800">UPI</p>
-                  <p className="text-xs text-gray-500">GPay, PhonePe, Paytm, BHIM</p>
-                </div>
-                <span className="text-[10px] px-2 py-0.5 bg-green-100 text-green-700 rounded-full font-bold">Recommended</span>
-              </label>
-
-              {selectedMethod === 'upi' && (
-                <div className="ml-8 p-4 bg-white rounded-lg border border-gray-200">
-                  <label className="text-xs font-medium text-gray-700 block mb-1.5">UPI ID</label>
-                  <input type="text" value={upiId} onChange={(e) => setUpiId(e.target.value)} placeholder="yourname@upi" className="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-red-500" required />
-                </div>
-              )}
-
-              {/* Card */}
-              <label className={`flex items-center gap-4 p-4 bg-white rounded-xl border-2 cursor-pointer transition-all ${selectedMethod === 'card' ? 'border-red-500 bg-red-50/30' : 'border-gray-200 hover:border-gray-300'}`}>
-                <input type="radio" name="payment" value="card" checked={selectedMethod === 'card'} onChange={() => setSelectedMethod('card')} className="w-4 h-4 text-red-600" />
-                <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center"><span className="text-xl">💳</span></div>
-                <div className="flex-1">
-                  <p className="font-semibold text-sm text-gray-800">Credit / Debit Card</p>
-                  <p className="text-xs text-gray-500">Visa, Mastercard, RuPay</p>
-                </div>
-              </label>
-
-              {/* Net Banking */}
-              <label className={`flex items-center gap-4 p-4 bg-white rounded-xl border-2 cursor-pointer transition-all ${selectedMethod === 'netbanking' ? 'border-red-500 bg-red-50/30' : 'border-gray-200 hover:border-gray-300'}`}>
-                <input type="radio" name="payment" value="netbanking" checked={selectedMethod === 'netbanking'} onChange={() => setSelectedMethod('netbanking')} className="w-4 h-4 text-red-600" />
-                <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center"><span className="text-xl">🏦</span></div>
-                <div className="flex-1">
-                  <p className="font-semibold text-sm text-gray-800">Net Banking</p>
-                  <p className="text-xs text-gray-500">All major banks</p>
-                </div>
-              </label>
-
-              {/* COD */}
-              <label className={`flex items-center gap-4 p-4 bg-white rounded-xl border-2 cursor-pointer transition-all ${selectedMethod === 'cod' ? 'border-red-500 bg-red-50/30' : 'border-gray-200 hover:border-gray-300'}`}>
-                <input type="radio" name="payment" value="cod" checked={selectedMethod === 'cod'} onChange={() => setSelectedMethod('cod')} className="w-4 h-4 text-red-600" />
-                <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center"><span className="text-xl">💰</span></div>
-                <div className="flex-1">
-                  <p className="font-semibold text-sm text-gray-800">Cash on Delivery</p>
-                  <p className="text-xs text-gray-500">Pay when you receive (+₹40)</p>
-                </div>
-                <span className="text-[10px] px-2 py-0.5 bg-amber-100 text-amber-700 rounded-full font-bold">+₹40</span>
-              </label>
-
-              {/* Security */}
-              <div className="flex items-center gap-3 p-4 bg-green-50 rounded-xl border border-green-100">
-                <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
-                <div>
-                  <p className="text-xs font-semibold text-green-800">100% Secure Payment</p>
-                  <p className="text-[10px] text-green-600">Your information is encrypted & safe</p>
-                </div>
+        {/* Steps */}
+        <div className="flex items-center justify-center gap-3 mb-8">
+          {['Address', 'Payment', 'Confirm'].map((step, i) => (
+            <React.Fragment key={step}>
+              <div className={`flex items-center gap-1.5 ${i <= 1 ? 'text-[#C9A84C]' : 'text-[#666]'}`}>
+                <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold ${i <= 1 ? 'gradient-gold text-black' : 'bg-[#222] text-[#666]'}`}>{i < 1 ? '✓' : i + 1}</div>
+                <span className="text-[11px] font-medium">{step}</span>
               </div>
+              {i < 2 && <div className={`w-10 h-px ${i < 1 ? 'bg-[#C9A84C]' : 'bg-[#2A2A2A]'}`} />}
+            </React.Fragment>
+          ))}
+        </div>
 
-              {/* Pay Button */}
-              <button
-                type="submit"
-                disabled={isProcessing}
-                className={`w-full py-4 rounded-xl font-bold text-base transition-all ${isProcessing ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-red-600 text-white hover:bg-red-700 shadow-lg hover:shadow-xl'}`}
-              >
-                {isProcessing ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
-                    Processing Payment...
-                  </span>
-                ) : (
-                  `PAY ₹${totalAmount.toLocaleString()}`
-                )}
-              </button>
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+          <div className="lg:col-span-3 space-y-3">
+            <h2 className="font-display text-lg font-bold text-white mb-4">Payment Method</h2>
+
+            {/* UPI */}
+            <label className={`card rounded-lg p-4 flex items-center gap-4 cursor-pointer ${method === 'upi' ? 'border-[#C9A84C]' : ''}`}>
+              <input type="radio" name="pay" value="upi" checked={method === 'upi'} onChange={() => setMethod('upi')} className="accent-[#C9A84C]" />
+              <div className="w-9 h-9 bg-[#2ECC71]/10 rounded-lg flex items-center justify-center"><span className="text-lg">📱</span></div>
+              <div className="flex-1"><p className="text-xs font-bold text-white">UPI</p><p className="text-[10px] text-[#666]">GPay, PhonePe, Paytm</p></div>
+              <span className="badge-new">RECOMMENDED</span>
+            </label>
+            {method === 'upi' && (
+              <div className="ml-12 card rounded-md p-3"><input value={upiId} onChange={e => setUpiId(e.target.value)} placeholder="yourname@upi" className="input w-full text-xs" /></div>
+            )}
+
+            {/* Card */}
+            <label className={`card rounded-lg p-4 flex items-center gap-4 cursor-pointer ${method === 'card' ? 'border-[#C9A84C]' : ''}`}>
+              <input type="radio" name="pay" value="card" checked={method === 'card'} onChange={() => setMethod('card')} className="accent-[#C9A84C]" />
+              <div className="w-9 h-9 bg-blue-500/10 rounded-lg flex items-center justify-center"><span className="text-lg">💳</span></div>
+              <div className="flex-1"><p className="text-xs font-bold text-white">Credit / Debit Card</p><p className="text-[10px] text-[#666]">Visa, Mastercard, RuPay</p></div>
+            </label>
+            {method === 'card' && (
+              <div className="ml-12 card rounded-md p-3 space-y-2">
+                <input placeholder="Card number" className="input w-full text-xs" />
+                <div className="flex gap-2"><input placeholder="MM/YY" className="input flex-1 text-xs" /><input placeholder="CVV" className="input w-20 text-xs" /></div>
+              </div>
+            )}
+
+            {/* Net Banking */}
+            <label className={`card rounded-lg p-4 flex items-center gap-4 cursor-pointer ${method === 'netbanking' ? 'border-[#C9A84C]' : ''}`}>
+              <input type="radio" name="pay" value="netbanking" checked={method === 'netbanking'} onChange={() => setMethod('netbanking')} className="accent-[#C9A84C]" />
+              <div className="w-9 h-9 bg-purple-500/10 rounded-lg flex items-center justify-center"><span className="text-lg">🏦</span></div>
+              <div className="flex-1"><p className="text-xs font-bold text-white">Net Banking</p><p className="text-[10px] text-[#666]">All major banks</p></div>
+            </label>
+
+            {/* COD */}
+            <label className={`card rounded-lg p-4 flex items-center gap-4 cursor-pointer ${method === 'cod' ? 'border-[#C9A84C]' : ''}`}>
+              <input type="radio" name="pay" value="cod" checked={method === 'cod'} onChange={() => setMethod('cod')} className="accent-[#C9A84C]" />
+              <div className="w-9 h-9 bg-[#F39C12]/10 rounded-lg flex items-center justify-center"><span className="text-lg">💰</span></div>
+              <div className="flex-1"><p className="text-xs font-bold text-white">Cash on Delivery</p><p className="text-[10px] text-[#666]">Pay when delivered</p></div>
+              <span className="text-[9px] font-bold text-[#F39C12] bg-[#F39C12]/10 px-2 py-0.5 rounded">+₹40</span>
+            </label>
+
+            {/* Security */}
+            <div className="flex items-center gap-2 p-3 bg-[#2ECC71]/5 border border-[#2ECC71]/10 rounded-lg">
+              <span className="text-lg">🔒</span>
+              <p className="text-[10px] text-[#2ECC71]"><strong>100% Secure Payment</strong> — SSL Encrypted</p>
             </div>
 
-            {/* Order Summary */}
-            <div className="lg:col-span-1">
-              <div className="bg-white rounded-xl p-5 border border-gray-200 sticky top-20">
-                <h3 className="font-semibold text-sm text-gray-800 mb-4">Order Summary</h3>
-                <div className="space-y-3 max-h-40 overflow-y-auto mb-4">
-                  {items.map(item => (
-                    <div key={`${item.product.id}-${item.size}`} className="flex gap-2 text-xs">
-                      <div className="w-10 h-10 bg-gray-100 rounded flex items-center justify-center text-lg flex-shrink-0">
-                        {item.product.category === 'jeans' ? '👖' : '👕'}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="truncate font-medium">{item.product.name}</p>
-                        <p className="text-gray-400">Qty: {item.quantity} | {item.size}</p>
-                      </div>
-                      <span className="font-semibold whitespace-nowrap">₹{(item.product.price * item.quantity).toLocaleString()}</span>
-                    </div>
-                  ))}
-                </div>
-                <div className="border-t pt-3 space-y-2 text-sm">
-                  <div className="flex justify-between"><span className="text-gray-500">Subtotal</span><span>₹{getSubtotal().toLocaleString()}</span></div>
-                  {couponDiscount > 0 && <div className="flex justify-between text-green-600"><span>Discount</span><span>-₹{((getSubtotal() * couponDiscount) / 100).toLocaleString()}</span></div>}
-                  <div className="flex justify-between"><span className="text-gray-500">Delivery</span><span className={deliveryCharge === 0 ? 'text-green-600' : ''}>{deliveryCharge === 0 ? 'FREE' : `₹${deliveryCharge}`}</span></div>
-                  {codCharge > 0 && <div className="flex justify-between"><span className="text-gray-500">COD Charge</span><span>₹{codCharge}</span></div>}
-                  <div className="flex justify-between font-bold text-base border-t pt-2"><span>Total</span><span className="text-red-600">₹{totalAmount.toLocaleString()}</span></div>
-                </div>
+            <button onClick={handlePay} disabled={processing} className={`w-full py-4 rounded font-bold text-sm uppercase tracking-wider transition-all ${processing ? 'bg-[#333] text-[#666] cursor-not-allowed' : 'gradient-gold text-black hover:opacity-90'}`}>
+              {processing ? (
+                <span className="flex items-center justify-center gap-2"><span className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin" />Processing...</span>
+              ) : `PAY ₹${total.toLocaleString()}`}
+            </button>
+          </div>
+
+          {/* Summary */}
+          <div className="lg:col-span-2">
+            <div className="card rounded-lg p-5 sticky top-16">
+              <h3 className="text-xs font-bold text-white mb-3">Order Summary</h3>
+              <div className="space-y-1.5 text-xs">
+                <div className="flex justify-between"><span className="text-[#A0A0A0]">Subtotal</span><span className="text-white">₹{subtotal.toLocaleString()}</span></div>
+                <div className="flex justify-between"><span className="text-[#A0A0A0]">Delivery</span><span className={delivery === 0 ? 'text-[#2ECC71]' : 'text-white'}>{delivery === 0 ? 'FREE' : `₹${delivery}`}</span></div>
+                {codCharge > 0 && <div className="flex justify-between"><span className="text-[#A0A0A0]">COD Charge</span><span className="text-white">₹{codCharge}</span></div>}
+                <div className="flex justify-between font-bold text-base pt-2 border-t border-[#2A2A2A]"><span className="text-white">Total</span><span className="text-[#C9A84C]">₹{total.toLocaleString()}</span></div>
               </div>
             </div>
           </div>
-        </form>
+        </div>
       </div>
     </div>
   );

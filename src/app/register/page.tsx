@@ -3,172 +3,63 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/context/AuthContext';
+import { useStore } from '@/store/useStore';
 
 export default function RegisterPage() {
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [agreeTerms, setAgreeTerms] = useState(false);
-  const { register } = useAuth();
+  const setUser = useStore((s) => s.setUser);
   const router = useRouter();
+  const [form, setForm] = useState({ name: '', email: '', phone: '', password: '', confirm: '' });
+  const [error, setError] = useState('');
+  const [agree, setAgree] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const strength = form.password.length >= 8 ? (form.password.match(/[A-Z]/) && form.password.match(/\d/) ? 'Strong' : 'Medium') : form.password.length > 0 ? 'Weak' : '';
+
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    if (form.password !== form.confirm) { setError('Passwords do not match'); return; }
+    if (form.password.length < 6) { setError('Password must be at least 6 characters'); return; }
+    if (!agree) { setError('Please agree to Terms & Conditions'); return; }
 
-    if (password !== confirmPassword) {
-      setError('Passwords do not match');
-      return;
-    }
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters');
-      return;
-    }
-    if (!agreeTerms) {
-      setError('Please agree to the Terms & Conditions');
-      return;
-    }
-
-    setLoading(true);
-    const success = await register(name, email, phone, password);
-    if (success) {
-      router.push('/');
-    } else {
-      setError('Email already registered. Please login instead.');
-    }
-    setLoading(false);
+    const users = JSON.parse(localStorage.getItem('pjc_registered_users') || '[]');
+    if (users.find((u: any) => u.email === form.email)) { setError('Email already registered'); return; }
+    users.push({ name: form.name, email: form.email, phone: form.phone, password: form.password });
+    localStorage.setItem('pjc_registered_users', JSON.stringify(users));
+    setUser({ name: form.name, email: form.email, phone: form.phone });
+    router.push('/');
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary via-primary-light to-primary flex items-center justify-center p-4">
-      {/* Background Decoration */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute top-10 right-20 w-72 h-72 bg-accent/10 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-10 left-20 w-64 h-64 bg-secondary/10 rounded-full blur-3xl"></div>
-      </div>
-
-      <div className="relative w-full max-w-md">
-        {/* Logo */}
+    <div className="min-h-screen flex items-center justify-center px-4 py-8 bg-gradient-to-b from-[#0D0D0D] to-[#1A1A1A]">
+      <div className="w-full max-w-sm">
         <div className="text-center mb-6">
-          <div className="w-16 h-16 bg-gradient-to-br from-secondary to-accent rounded-2xl flex items-center justify-center mx-auto shadow-2xl mb-4">
-            <span className="text-white text-2xl font-bold">PJC</span>
+          <div className="w-14 h-14 gradient-gold rounded-xl flex items-center justify-center mx-auto mb-3">
+            <span className="text-black text-lg font-bold font-display">PJC</span>
           </div>
-          <h1 className="text-2xl font-poppins font-bold text-white">Create Account</h1>
-          <p className="text-gray-400 text-sm mt-1">Join Prasad Jeans Club today</p>
+          <h1 className="font-display text-2xl font-bold text-white">Create Account</h1>
+          <p className="text-[#666] text-xs mt-1">Join Prasad Jeans Club</p>
         </div>
 
-        {/* Register Form */}
-        <div className="bg-white rounded-2xl shadow-2xl p-8">
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {error && (
-              <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">
-                {error}
-              </div>
-            )}
-
+        <div className="card rounded-xl p-6">
+          <form onSubmit={handleSubmit} className="space-y-3">
+            {error && <p className="text-[#E74C3C] text-xs bg-[#E74C3C]/10 border border-[#E74C3C]/20 rounded-md px-3 py-2">{error}</p>}
+            <div><label className="text-[10px] font-bold text-[#A0A0A0] uppercase tracking-wider block mb-1">Full Name</label><input value={form.name} onChange={e => setForm({...form, name: e.target.value})} required className="input w-full" placeholder="Your name" /></div>
+            <div><label className="text-[10px] font-bold text-[#A0A0A0] uppercase tracking-wider block mb-1">Email</label><input type="email" value={form.email} onChange={e => setForm({...form, email: e.target.value})} required className="input w-full" placeholder="your@email.com" /></div>
+            <div><label className="text-[10px] font-bold text-[#A0A0A0] uppercase tracking-wider block mb-1">Phone</label><input value={form.phone} onChange={e => setForm({...form, phone: e.target.value})} required className="input w-full" placeholder="10-digit number" /></div>
             <div>
-              <label className="text-sm font-medium text-gray-700 block mb-1.5">Full Name</label>
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Enter your full name"
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-secondary/20 focus:border-secondary text-sm"
-                required
-              />
+              <label className="text-[10px] font-bold text-[#A0A0A0] uppercase tracking-wider block mb-1">Password</label>
+              <input type="password" value={form.password} onChange={e => setForm({...form, password: e.target.value})} required className="input w-full" placeholder="Min 6 characters" />
+              {strength && <div className="flex items-center gap-2 mt-1"><div className={`h-1 flex-1 rounded-full ${strength === 'Strong' ? 'bg-[#2ECC71]' : strength === 'Medium' ? 'bg-[#F39C12]' : 'bg-[#E74C3C]'}`} /><span className={`text-[9px] font-bold ${strength === 'Strong' ? 'text-[#2ECC71]' : strength === 'Medium' ? 'text-[#F39C12]' : 'text-[#E74C3C]'}`}>{strength}</span></div>}
             </div>
-
-            <div>
-              <label className="text-sm font-medium text-gray-700 block mb-1.5">Email Address</label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Enter your email"
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-secondary/20 focus:border-secondary text-sm"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="text-sm font-medium text-gray-700 block mb-1.5">Phone Number</label>
-              <input
-                type="tel"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                placeholder="Enter your phone number"
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-secondary/20 focus:border-secondary text-sm"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="text-sm font-medium text-gray-700 block mb-1.5">Password</label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Create a password (min 6 chars)"
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-secondary/20 focus:border-secondary text-sm"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="text-sm font-medium text-gray-700 block mb-1.5">Confirm Password</label>
-              <input
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="Re-enter your password"
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-secondary/20 focus:border-secondary text-sm"
-                required
-              />
-            </div>
-
-            <label className="flex items-start gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={agreeTerms}
-                onChange={(e) => setAgreeTerms(e.target.checked)}
-                className="w-4 h-4 rounded border-gray-300 text-secondary focus:ring-secondary mt-0.5"
-              />
-              <span className="text-xs text-gray-600">
-                I agree to the{' '}
-                <Link href="/terms" className="text-secondary font-medium">Terms & Conditions</Link>
-                {' '}and{' '}
-                <Link href="/privacy" className="text-secondary font-medium">Privacy Policy</Link>
-              </span>
-            </label>
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-3 bg-gradient-to-r from-secondary to-secondary-dark text-white font-semibold rounded-xl hover:shadow-lg transition-all disabled:opacity-50"
-            >
-              {loading ? (
-                <span className="flex items-center justify-center gap-2">
-                  <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
-                  Creating Account...
-                </span>
-              ) : (
-                'Create Account'
-              )}
-            </button>
+            <div><label className="text-[10px] font-bold text-[#A0A0A0] uppercase tracking-wider block mb-1">Confirm Password</label><input type="password" value={form.confirm} onChange={e => setForm({...form, confirm: e.target.value})} required className="input w-full" placeholder="Re-enter password" /></div>
+            <label className="flex items-start gap-2 cursor-pointer pt-1"><input type="checkbox" checked={agree} onChange={e => setAgree(e.target.checked)} className="w-3.5 h-3.5 rounded accent-[#C9A84C] mt-0.5" /><span className="text-[10px] text-[#A0A0A0]">I agree to the <Link href="/terms" className="text-[#C9A84C]">Terms</Link> & <Link href="/privacy" className="text-[#C9A84C]">Privacy Policy</Link></span></label>
+            <button type="submit" className="btn-gold w-full py-3 mt-1">CREATE ACCOUNT</button>
           </form>
-
-          <p className="text-center text-sm text-gray-600 mt-6">
-            Already have an account?{' '}
-            <Link href="/login" className="text-secondary font-semibold hover:text-secondary-dark">
-              Login
-            </Link>
-          </p>
         </div>
+
+        <p className="text-center text-xs text-[#666] mt-5">
+          Already have an account? <Link href="/login" className="text-[#C9A84C] font-bold hover:underline">Login →</Link>
+        </p>
       </div>
     </div>
   );

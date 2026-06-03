@@ -2,51 +2,43 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { useWishlist } from '@/context/WishlistContext';
-import { useCart } from '@/context/CartContext';
+import { useStore } from '@/store/useStore';
 import ProductCard from '@/components/ProductCard';
 
 export default function WishlistPage() {
-  const { items, removeFromWishlist } = useWishlist();
-  const { addToCart } = useCart();
+  const wishlist = useStore((s) => s.wishlist);
+  const products = useStore((s) => s.products);
+  const addToCart = useStore((s) => s.addToCart);
+  const toggleWishlist = useStore((s) => s.toggleWishlist);
 
-  const handleMoveToCart = (product: any) => {
-    addToCart(product, product.sizes[0], product.colors[0]);
-    removeFromWishlist(product.id);
-    if ((window as any).__pjcToast) (window as any).__pjcToast('Moved to cart!', 'success');
-  };
+  const items = products.filter(p => wishlist.includes(p.id));
 
   if (items.length === 0) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <span className="text-8xl">❤️</span>
-          <h2 className="text-2xl font-poppins font-bold text-primary mt-6">Your Wishlist is Empty</h2>
-          <p className="text-gray-500 mt-2">Save items you love for later</p>
-          <Link href="/shop" className="inline-block mt-6 px-8 py-3 bg-secondary text-white font-medium rounded-xl">
-            Browse Products
-          </Link>
+          <span className="text-6xl block mb-4">❤️</span>
+          <h2 className="font-display text-xl font-bold text-white">Your wishlist is empty</h2>
+          <p className="text-[#666] text-sm mt-2">Save products you love</p>
+          <Link href="/shop" className="btn-gold inline-block mt-5">START WISHLIST →</Link>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen">
       <div className="max-w-7xl mx-auto px-4 py-8">
-        <h1 className="text-2xl md:text-3xl font-poppins font-bold text-primary mb-6">
-          My Wishlist <span className="text-gray-400 text-lg">({items.length} items)</span>
-        </h1>
-
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-          {items.map(product => (
-            <div key={product.id} className="relative">
-              <ProductCard product={product} />
+        <h1 className="font-display text-2xl font-bold text-white mb-6">My Wishlist <span className="text-[#666] text-lg">({items.length})</span></h1>
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+          {items.map(p => (
+            <div key={p.id} className="relative">
+              <ProductCard product={p} />
               <button
-                onClick={() => handleMoveToCart(product)}
-                className="absolute bottom-4 left-4 right-4 py-2 bg-secondary text-white text-xs font-medium rounded-lg hover:bg-secondary-dark transition-colors text-center"
+                onClick={() => { addToCart({ productId: p.id, name: p.name, price: p.price, size: p.sizes[1] || p.sizes[0], color: p.colors[0], qty: 1, emoji: p.emoji }); toggleWishlist(p.id); if ((window as any).__pjcToast) (window as any).__pjcToast('Moved to cart ✓'); }}
+                className="absolute bottom-12 left-2 right-2 btn-gold-sm text-center py-1.5 text-[9px]"
               >
-                Move to Cart
+                MOVE TO CART
               </button>
             </div>
           ))}

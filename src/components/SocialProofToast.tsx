@@ -1,56 +1,55 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useStore } from '@/store/useStore';
 
-const messages = [
-  { icon: '🛍️', text: 'Rahul from Mumbai just bought Classic Slim Fit Jeans' },
-  { icon: '⭐', text: 'Amit gave 5 stars to the Oxford Shirt' },
-  { icon: '🔥', text: '32 people viewing Denim Jacket right now' },
-  { icon: '📦', text: "Vijay's order from Delhi just shipped" },
-  { icon: '🛍️', text: 'Kiran from Hyderabad just bought Premium Hoodie' },
-  { icon: '⭐', text: 'Suresh gave 5 stars to Ripped Jeans' },
-  { icon: '🔥', text: '18 people added Polo T-Shirt to cart' },
-  { icon: '📦', text: "Priya's order from Bangalore was delivered" },
-];
+const names = ['Rahul', 'Arjun', 'Karthik', 'Vijay', 'Suresh', 'Anil', 'Priya', 'Neha', 'Divya', 'Meera'];
+const cities = ['Mumbai', 'Delhi', 'Bangalore', 'Chennai', 'Hyderabad', 'Pune', 'Kolkata', 'Ahmedabad', 'Jaipur', 'Ongole'];
+const defaultProducts = ['Classic Slim Fit Jeans', 'Premium Fleece Hoodie', 'Oxford Button-Down Shirt', 'Graphic Oversized Tee', 'Denim Jacket'];
 
 export default function SocialProofToast() {
-  const [current, setCurrent] = useState<typeof messages[0] | null>(null);
+  const products = useStore((s) => s.products);
+  const [message, setMessage] = useState('');
   const [visible, setVisible] = useState(false);
 
+  const generateMessage = useCallback(() => {
+    const name = names[Math.floor(Math.random() * names.length)];
+    const city = cities[Math.floor(Math.random() * cities.length)];
+    const productNames = products.length > 0 ? products.map(p => p.name) : defaultProducts;
+    const product = productNames[Math.floor(Math.random() * productNames.length)];
+    return `🛍️ ${name} from ${city} just bought ${product}`;
+  }, [products]);
+
   useEffect(() => {
-    let index = 0;
-    const showNext = () => {
-      setCurrent(messages[index % messages.length]);
+    const showToast = () => {
+      if (visible) return;
+      setMessage(generateMessage());
       setVisible(true);
-      index++;
-
-      // Hide after 4 seconds
-      setTimeout(() => setVisible(false), 4000);
+      setTimeout(() => setVisible(false), 3500);
     };
 
-    // First notification after 8 seconds
-    const firstTimer = setTimeout(showNext, 8000);
+    // First after 8s
+    const first = setTimeout(showToast, 8000);
 
-    // Then every 25-40 seconds
-    const interval = setInterval(showNext, 25000 + Math.random() * 15000);
+    // Then every 25-40s
+    const interval = setInterval(() => {
+      const delay = 25000 + Math.random() * 15000;
+      setTimeout(showToast, delay);
+    }, 30000);
 
-    return () => {
-      clearTimeout(firstTimer);
-      clearInterval(interval);
-    };
-  }, []);
+    return () => { clearTimeout(first); clearInterval(interval); };
+  }, [generateMessage, visible]);
 
-  if (!current || !visible) return null;
+  if (!visible || !message) return null;
 
   return (
-    <div className="fixed bottom-4 left-4 z-[100] animate-slideInLeft max-w-xs">
-      <div className="bg-[#1A1A1A] border border-[#2A2A2A] rounded-xl p-3 flex items-center gap-3 shadow-lg">
-        <span className="text-xl flex-shrink-0">{current.icon}</span>
+    <div className="fixed bottom-4 left-4 z-[100] max-w-xs animate-slideInLeft">
+      <div className="bg-[#1A1A1A] border border-[#2A2A2A] border-l-2 border-l-[#C9A84C] rounded-lg p-3 shadow-lg flex items-start gap-2">
         <div className="flex-1 min-w-0">
-          <p className="text-xs text-white font-medium leading-snug">{current.text}</p>
-          <p className="text-[10px] text-[#666] mt-0.5">Just now</p>
+          <p className="text-[11px] text-white font-medium leading-snug">{message}</p>
+          <p className="text-[9px] text-[#666] mt-1">Just now • Verified Purchase</p>
         </div>
-        <button onClick={() => setVisible(false)} className="text-[#666] hover:text-white text-xs">✕</button>
+        <button onClick={() => setVisible(false)} className="text-[#666] hover:text-white text-xs flex-shrink-0 mt-0.5">✕</button>
       </div>
     </div>
   );

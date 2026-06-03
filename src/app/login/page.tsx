@@ -3,132 +3,87 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/context/AuthContext';
+import { useStore } from '@/store/useStore';
 
 export default function LoginPage() {
+  const setUser = useStore((s) => s.setUser);
+  const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPass, setShowPass] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const { login } = useAuth();
-  const router = useRouter();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setLoading(true);
 
-    const success = await login(email, password);
-    if (success) {
-      router.push('/');
-    } else {
-      setError('Invalid email or password. Try demo@prasadjeans.com / demo123');
-    }
-    setLoading(false);
+    setTimeout(() => {
+      // Demo login or check localStorage users
+      if ((email === 'test@pjc.com' && password === 'password123') || (email === 'demo@prasadjeans.com' && password === 'demo123')) {
+        setUser({ name: 'Prasad User', email, phone: '9876543210' });
+        router.push('/');
+        return;
+      }
+      const users = JSON.parse(localStorage.getItem('pjc_registered_users') || '[]');
+      const found = users.find((u: any) => u.email === email && u.password === password);
+      if (found) {
+        setUser({ name: found.name, email: found.email, phone: found.phone });
+        router.push('/');
+      } else {
+        setError('Invalid email or password');
+      }
+      setLoading(false);
+    }, 800);
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary via-primary-light to-primary flex items-center justify-center p-4">
-      {/* Background Decoration */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute top-20 left-20 w-64 h-64 bg-secondary/10 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-20 right-20 w-80 h-80 bg-accent/10 rounded-full blur-3xl"></div>
-      </div>
-
-      <div className="relative w-full max-w-md">
-        {/* Logo */}
-        <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-gradient-to-br from-secondary to-accent rounded-2xl flex items-center justify-center mx-auto shadow-2xl mb-4">
-            <span className="text-white text-2xl font-bold">PJC</span>
+    <div className="min-h-screen flex items-center justify-center px-4 bg-gradient-to-b from-[#0D0D0D] to-[#1A1A1A]">
+      <div className="w-full max-w-sm">
+        <div className="text-center mb-6">
+          <div className="w-14 h-14 gradient-gold rounded-xl flex items-center justify-center mx-auto mb-3">
+            <span className="text-black text-lg font-bold font-display">PJC</span>
           </div>
-          <h1 className="text-2xl font-poppins font-bold text-white">Welcome Back</h1>
-          <p className="text-gray-400 text-sm mt-1">Login to your Prasad Jeans Club account</p>
+          <h1 className="font-display text-2xl font-bold text-white">Welcome Back</h1>
+          <p className="text-[#666] text-xs mt-1">Login to Prasad Jeans Club</p>
         </div>
 
-        {/* Login Form */}
-        <div className="bg-white rounded-2xl shadow-2xl p-8">
-          <form onSubmit={handleSubmit} className="space-y-5">
-            {error && (
-              <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">
-                {error}
-              </div>
-            )}
+        <div className="card rounded-xl p-6">
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {error && <p className="text-[#E74C3C] text-xs bg-[#E74C3C]/10 border border-[#E74C3C]/20 rounded-md px-3 py-2">{error}</p>}
 
             <div>
-              <label className="text-sm font-medium text-gray-700 block mb-1.5">Email Address</label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Enter your email"
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-secondary/20 focus:border-secondary text-sm transition-all"
-                required
-              />
+              <label className="text-[10px] font-bold text-[#A0A0A0] uppercase tracking-wider block mb-1">Email</label>
+              <input type="email" value={email} onChange={e => setEmail(e.target.value)} required className="input w-full" placeholder="your@email.com" />
             </div>
 
             <div>
-              <label className="text-sm font-medium text-gray-700 block mb-1.5">Password</label>
+              <label className="text-[10px] font-bold text-[#A0A0A0] uppercase tracking-wider block mb-1">Password</label>
               <div className="relative">
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Enter your password"
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-secondary/20 focus:border-secondary text-sm transition-all pr-10"
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                >
-                  {showPassword ? '🙈' : '👁️'}
-                </button>
+                <input type={showPass ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)} required className="input w-full pr-10" placeholder="••••••••" />
+                <button type="button" onClick={() => setShowPass(!showPass)} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#666] text-xs">{showPass ? '🙈' : '👁'}</button>
               </div>
             </div>
 
             <div className="flex items-center justify-between">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" className="w-4 h-4 rounded border-gray-300 text-secondary focus:ring-secondary" />
-                <span className="text-sm text-gray-600">Remember me</span>
-              </label>
-              <button type="button" className="text-sm text-secondary hover:text-secondary-dark font-medium">
-                Forgot Password?
-              </button>
+              <label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" className="w-3.5 h-3.5 rounded accent-[#C9A84C]" /><span className="text-[10px] text-[#A0A0A0]">Remember me</span></label>
+              <button type="button" className="text-[10px] text-[#C9A84C] hover:underline">Forgot Password?</button>
             </div>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-3 bg-gradient-to-r from-secondary to-secondary-dark text-white font-semibold rounded-xl hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loading ? (
-                <span className="flex items-center justify-center gap-2">
-                  <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
-                  Logging in...
-                </span>
-              ) : (
-                'Login'
-              )}
+            <button type="submit" disabled={loading} className={`w-full py-3 rounded font-bold text-sm uppercase tracking-wider ${loading ? 'bg-[#333] text-[#666]' : 'gradient-gold text-black hover:opacity-90'} transition-all`}>
+              {loading ? 'Logging in...' : 'LOGIN'}
             </button>
           </form>
 
-          {/* Demo Credentials */}
-          <div className="mt-4 p-3 bg-blue-50 rounded-lg">
-            <p className="text-xs text-blue-600 text-center">
-              Demo: <strong>demo@prasadjeans.com</strong> / <strong>demo123</strong>
-            </p>
+          <div className="mt-4 p-2.5 bg-[#222] rounded-md text-center">
+            <p className="text-[9px] text-[#666]">Demo: <strong className="text-[#A0A0A0]">test@pjc.com</strong> / <strong className="text-[#A0A0A0]">password123</strong></p>
           </div>
-
-          {/* Register Link */}
-          <p className="text-center text-sm text-gray-600 mt-6">
-            Don&apos;t have an account?{' '}
-            <Link href="/register" className="text-secondary font-semibold hover:text-secondary-dark">
-              Register
-            </Link>
-          </p>
         </div>
+
+        <p className="text-center text-xs text-[#666] mt-5">
+          New here? <Link href="/register" className="text-[#C9A84C] font-bold hover:underline">Create Account →</Link>
+        </p>
       </div>
     </div>
   );
